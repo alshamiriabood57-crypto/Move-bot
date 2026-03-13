@@ -3,75 +3,74 @@ import logging
 from aiogram import Bot, Dispatcher, types, executor
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
-# إعداد السجلات
+# إعداد السجلات لمراقبة أداء البوت
 logging.basicConfig(level=logging.INFO)
 
-# التوكن من إعدادات ريندر
+# جلب التوكن من إعدادات Render (Environment Variables)
 API_TOKEN = os.getenv("BOT_TOKEN") 
 
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher(bot)
 
-# --- معلومات المطور (تعديلك هنا) ---
-DEVELOPER_NAME = "Ali Samir"
-DEVELOPER_USERNAME = "TQTTP"  # ضع يوزرك هنا بدون @
+# --- بيانات المطور (تم التحديث) ---
+DEV_NAME = "Abood"
+DEV_USER = "TQTTP" # يوزرك الجديد
 
-# --- قائمة الأزرار الرئيسية ---
-def main_menu_keyboard():
+# --- دالة إنشاء القائمة الرئيسية ---
+def get_main_keyboard():
     keyboard = InlineKeyboardMarkup(row_width=2)
     
-    # زر البحث
+    # زر البحث الفوري
     search_btn = InlineKeyboardButton("🔍 البحث في البوت", switch_inline_query_current_chat="")
     
-    # أزرار الأقسام
-    btn_marvel = InlineKeyboardButton("مارفل", callback_data="marvel")
-    btn_series = InlineKeyboardButton("المسلسلات", callback_data="series")
-    btn_movies = InlineKeyboardButton("الافلام", callback_data="movies")
-    btn_arabic = InlineKeyboardButton("افلام عربية", callback_data="arabic")
+    # توزيع الأزرار حسب التصميم الذي طلبته
+    btn_marvel = InlineKeyboardButton("مارفل", callback_data="cat_marvel")
+    btn_series = InlineKeyboardButton("المسلسلات", callback_data="cat_series")
+    btn_movies = InlineKeyboardButton("الافلام", callback_data="cat_movies")
+    btn_arabic = InlineKeyboardButton("افلام عربية", callback_data="cat_arabic")
     
-    # زر المطور وقناة الاقتباسات
-    btn_dev = InlineKeyboardButton("👨‍💻 المطور", callback_data="dev_info")
-    btn_quotes = InlineKeyboardButton("قناة اقتباسات", url="https://t.me/your_channel")
+    btn_dev = InlineKeyboardButton("👨‍💻 المطور", callback_data="dev_section")
+    btn_quotes = InlineKeyboardButton("قناة اقتباسات", url="https://t.me/your_channel") # ضع رابط قناتك هنا
+    btn_featured = InlineKeyboardButton("🎬 أفلام مختارة", callback_data="cat_featured")
 
     keyboard.add(search_btn)
     keyboard.row(btn_marvel, btn_series)
     keyboard.row(btn_movies, btn_arabic)
     keyboard.row(btn_dev, btn_quotes)
+    keyboard.add(btn_featured)
     
     return keyboard
 
-# --- الرد على /start ---
+# --- الرد على أمر /start ---
 @dp.message_handler(commands=['start'])
-async def send_welcome(message: types.Message):
-    welcome_text = (
-        f"🎬 **أهلاً بك في بوت الأفلام!**\n\n"
-        f"البوت بإشراف المطور: **{DEVELOPER_NAME}**\n"
-        "استخدم الأزرار أدناه للتنقل."
+async def start_cmd(message: types.Message):
+    text = (
+        f"🎬 **مرحباً بك في بوت الأفلام والمسلسلات**\n\n"
+        f"بإشراف المطور: **{DEV_NAME}**\n"
+        "استخدم القائمة أدناه للبحث أو اختيار القسم المناسب."
     )
-    await message.reply(welcome_text, reply_markup=main_menu_keyboard(), parse_mode="Markdown")
+    await message.reply(text, reply_markup=get_main_keyboard(), parse_mode="Markdown")
 
-# --- معالجة زر المطور ---
-@dp.callback_query_handler(text="dev_info")
-async def dev_info(callback_query: types.CallbackQuery):
+# --- عرض معلومات المطور عند الضغط على الزر ---
+@dp.callback_query_handler(text="dev_section")
+async def show_dev(call: types.CallbackQuery):
     dev_text = (
-        f"👤 **معلومات المطور**\n\n"
-        f"📝 الاسم: {DEVELOPER_NAME}\n"
-        f"🆔 اليوزر: @{DEVELOPER_USERNAME}\n"
-        f"🎓 التخصص: Medical Laboratory"
+        f"👨‍💻 **معلومات مطور البوت**\n\n"
+        f"• الاسم: {DEV_NAME}\n"
+        f"• المعرف: @{DEV_USER}\n"
+        f"• التخصص: مختبرات طبية - جامعة تعز"
     )
-    keyboard = InlineKeyboardMarkup()
-    btn_contact = InlineKeyboardButton("💬 مراسلة المطور", url=f"https://t.me/{DEVELOPER_USERNAME}")
-    keyboard.add(btn_contact)
+    kb = InlineKeyboardMarkup().add(InlineKeyboardButton("💬 مراسلة المطور مباشرة", url=f"https://t.me/{DEV_USER}"))
     
-    await bot.answer_callback_query(callback_query.id)
-    await bot.send_message(callback_query.from_user.id, dev_text, reply_markup=keyboard, parse_mode="Markdown")
+    await bot.send_message(call.from_user.id, dev_text, reply_markup=kb, parse_mode="Markdown")
+    await call.answer()
 
-# --- محرك البحث (Inline Query) ---
+# --- محرك البحث (Inline) لنتائج سريعة ---
 @dp.inline_handler()
 async def search_movies(inline_query: types.InlineQuery):
     query = inline_query.query.lower()
     
-    # مثال لقاعدة بيانات (أضف أفلامك هنا)
+    # قائمة تجريبية للأفلام (يمكنك التوسع فيها لاحقاً)
     movies_db = [
         {"id": "1", "title": "Inception", "link": "https://t.me/share/1"},
         {"id": "2", "title": "Interstellar", "link": "https://t.me/share/2"},
